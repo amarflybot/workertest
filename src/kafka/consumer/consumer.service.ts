@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   SubscribeTo,
   SubscribeToFixedGroup,
@@ -8,18 +8,17 @@ import { HELLO_FIXED_TOPIC } from '../constant';
 
 @Injectable()
 export class ConsumerService {
-  private readonly logger = new Logger(ConsumerService.name);
-
   /**
    * When group id is unique for every container.
    * @param payload
    */
   @SubscribeTo('hello.topic')
   helloSubscriber(payload: KafkaPayload) {
-    this.logger.debug(
-      `[KAKFA-CONSUMER] Print message after receiving ${JSON.stringify(
-        payload,
-      )}`,
+    console.log(
+      '[KAKFA-CONSUMER] Print message after receiving',
+      payload,
+      ' process id: ',
+      process.pid,
     );
   }
 
@@ -30,10 +29,11 @@ export class ConsumerService {
    */
   @SubscribeToFixedGroup(HELLO_FIXED_TOPIC)
   helloSubscriberToFixedGroup(payload: KafkaPayload) {
-    this.logger.debug(
-      `[KAKFA-CONSUMER] Print message after receiving for fixed group ${JSON.stringify(
-        payload,
-      )}`,
+    console.log(
+      '[KAKFA-CONSUMER] Print message after receiving for fixed group',
+      payload,
+      ' process id: ',
+      process.pid,
     );
   }
 
@@ -43,10 +43,11 @@ export class ConsumerService {
    */
   @SubscribeTo('hello.topic2')
   helloSubscriber2(payload: KafkaPayload) {
-    this.logger.debug(
-      `[KAKFA-CONSUMER] Print message after receiving ${JSON.stringify(
-        payload,
-      )}`,
+    console.log(
+      '[KAKFA-CONSUMER] Print message after receiving',
+      payload,
+      ' process id: ',
+      process.pid,
     );
   }
 }
