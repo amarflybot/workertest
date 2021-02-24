@@ -1,0 +1,92 @@
+version: '3'
+
+networks:
+  webnet:
+    driver: bridge
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=development
+    ports:
+      - 3000:3000
+    depends_on:
+      - postgres
+    links:
+      - postgres:postgres
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev
+    restart: always
+    env_file:
+      - docker.env
+    networks:
+      - webnet
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - 2181:2181
+    networks:
+      - webnet
+    volumes:
+      - ./_data/zookeeper/data:/data
+
+  kafka:
+    image: wurstmeister/kafka:2.12-2.5.0
+    hostname: kafka
+    #container_name: kafka
+    ports:
+      - 9092:9092
+    networks:
+      - webnet
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: LISTENER_DOCKER_INTERNAL://:19092,LISTENER_DOCKER_EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:19092,LISTENER_DOCKER_EXTERNAL://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_BROKER_ID: 1
+      KAFKA_CREATE_TOPICS: __consumer_offsets:50:1,user.create:1:1
+    volumes:
+      - ./_data/kafka/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+
+  kafkadrop:
+    hostname: kafkadrop
+    image: obsidiandynamics/kafdrop:latest
+    environment:
+      - KAFKA_BROKERCONNECT=kafka:19092
+    networks:
+      - webnet
+    ports:
+      - 9000:9000
+
+  postgres:
+    image: postgres:alpine
+    restart: always
+    ports:
+      - 5432:5432
+    networks:
+      - webnet
+    environment:
+      - POSTGRES_HOST=localhost
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=nestjs
+
+
+  adminer:
+    image: adminer
+    restart: always
+    networks:
+      - webnet
+    ports:
+      - 8080:8080

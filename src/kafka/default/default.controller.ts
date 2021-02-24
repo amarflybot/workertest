@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { DefaultService } from './default.service';
 
-@Controller()
+@Controller('event')
 export class DefaultController {
   constructor(private readonly appService: DefaultService) {}
 
